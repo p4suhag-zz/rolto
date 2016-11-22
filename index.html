@@ -9,44 +9,108 @@
     <title>Wonder Beast</title>
     <link rel="stylesheet" media="all" href="assets/styles/index.css">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600" rel="stylesheet">
-    <script src="https://d3js.org/d3.v4.min.js"></script>
-</head>
-<body>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <style>
+    circle {
+        fill: rgb(31, 119, 180);
+        fill-opacity: .25;
+        stroke: rgb(31, 119, 180);
+        stroke-width: 1px;
+    }
     
-<script type="text/javascript">
-    d3.json('assets/json/sachin.json', function(data) {
+    .node1 {
+        opacity: 0;
+    }
 
-        var bat_score_won = [], bat_score_lost = [];
+    .leaf circle {
+        fill: #ff7f0e;
+        fill-opacity: 1;
+    }
+    
+    text {
+        font: 10px sans-serif;
+    }
+    </style>
+</head>
 
-        data.filter(function(item) {
-            if(item.match_result === 'won' && item.batting_score !== 'DNB') {
-                bat_score_won.push(item.batting_score);
-            } else if(item.match_result === 'lost' && item.batting_score !== 'DNB') {
-                bat_score_lost.push(item.batting_score);
-            }
+<body>
+
+<script>
+    var diameter = 700,
+        format = d3.format(",d");
+
+    var pack = d3.layout.pack()
+        .size([diameter - 2, diameter - 2])
+        .value(function(d) {
+            return d.values;
         });
 
-        var bat_won_scale = d3.scaleLinear()
-                            .domain([0, d3.max(bat_score_won)])
-                            .range([10, 30]);
-        
-        
-        var canvas = d3.select('body').append('svg')
-            .attr('width', 700)
-            .attr('height', 800)
+    
 
-        var posY = 30;
-        canvas.selectAll('circle')
-            .data(bat_score_won.sort(d3.ascending))
-            .enter()
-                .append('circle')
-                .attr('cx', 50)
-                .attr('cy', function(d, i) {
-                    posY += bat_won_scale(d)*2;
-                    return posY;
-                })
-                .attr('r', function(d) { return bat_won_scale(d);})
-    })
-</script>
+    d3.json('assets/json/sachin.json', function(data) {
+
+
+            var svg = d3.select("body").append("svg")
+                .attr("width", diameter)
+                .attr("height", diameter)
+                .append("g")
+                .attr("transform", "translate(2,2)");
+
+            var bat_score_won = [],
+                bat_score_lost = [];
+
+            data.filter(function(item) {
+                if (item.match_result === 'won' && item.batting_score !== 'DNB') {
+                    bat_score_won.push(item.batting_score);
+                } else if (item.match_result === 'lost' && item.batting_score !== 'DNB') {
+                    bat_score_lost.push(item.batting_score);
+                }
+            });
+
+            var bat_won_scale = d3.scale.linear()
+                .domain([0, d3.max(bat_score_won)])
+                .range([10, 20]);
+
+                var match_won_submit = d3.nest()
+                    .key(function(d) {
+                        return d;
+                    })
+                    .rollup(function(leaves) {
+                        return leaves.length;
+                    })
+                    .entries(bat_score_won.sort());
+
+                var root = {
+                    "key": "Score",
+                    "children": match_won_submit
+                };
+
+
+                var node = svg.datum(root).selectAll(".node")
+                    .data(pack.nodes)
+                    .enter().append("g")
+                    .attr("class", function(d) {
+                        return d.children ? "node1" : "leaf node";
+                    })
+                    .attr("transform", function(d) {
+                        return "translate(" + d.x + "," + d.y + ")";
+                    });
+
+                console.log(root)
+
+                node.append("circle")
+                    .attr("r", function(d, i) {
+                        return bat_won_scale(bat_score_won[i]);
+                    })
+                    .text(function(d, i) { return bat_score_won[i]; })
+                        .attr('color', 'white');
+
+                node.append("text")
+                        .attr("dx", function(d){return -2})
+                        .text(function(d, i){ return bat_score_won[i] });
+
+        });
+    </script>
 </body>
+
 </html>
