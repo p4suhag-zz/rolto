@@ -50,12 +50,6 @@
     d3.json('assets/json/sachin.json', function(data) {
 
 
-            var svg = d3.select("body").append("svg")
-                .attr("width", diameter)
-                .attr("height", diameter)
-                .append("g")
-                .attr("transform", "translate(2,2)");
-
             var bat_score_won = [],
                 bat_score_lost = [];
 
@@ -67,48 +61,111 @@
                 }
             });
 
-            var bat_won_scale = d3.scale.linear()
-                .domain([0, d3.max(bat_score_won)])
-                .range([10, 20]);
+            var create_won_layout = function() {
+                var svg = d3.select("body").append("svg")
+                    .attr("width", diameter)
+                    .attr("height", diameter)
+                    .append("g")
+                    .attr("transform", "translate(2,2)");
 
-                var match_won_submit = d3.nest()
-                    .key(function(d) {
-                        return d;
-                    })
-                    .rollup(function(leaves) {
-                        return leaves.length;
-                    })
-                    .entries(bat_score_won.sort());
+                var bat_won_scale = d3.scale.linear()
+                    .domain([0, d3.max(bat_score_won)])
+                    .range([10, 20]);
 
-                var root = {
-                    "key": "Score",
-                    "children": match_won_submit
-                };
+                    var match_won_submit = d3.nest()
+                        .key(function(d) {
+                            return d;
+                        })
+                        .rollup(function(leaves) {
+                            return leaves.length;
+                        })
+                        .entries(bat_score_won.sort());
+
+                    var root = {
+                        "key": "Score",
+                        "children": match_won_submit
+                    };
 
 
-                var node = svg.datum(root).selectAll(".node")
-                    .data(pack.nodes)
-                    .enter().append("g")
-                    .attr("class", function(d) {
-                        return d.children ? "node1" : "leaf node";
-                    })
-                    .attr("transform", function(d) {
-                        return "translate(" + d.x + "," + d.y + ")";
-                    });
+                    var node = svg.datum(root).selectAll(".node")
+                        .data(pack.nodes)
+                        .enter().append("g")
+                        .attr("class", function(d) {
+                            return d.children ? "node1" : "leaf node";
+                        })
+                        .attr("transform", function(d) {
+                            return "translate(" + d.x + "," + d.y + ")";
+                        });
 
-                console.log(root)
+                    console.log(root)
 
-                node.append("circle")
-                    .attr("r", function(d, i) {
-                        return bat_won_scale(bat_score_won[i]);
-                    })
-                    .text(function(d, i) { return bat_score_won[i]; })
-                        .attr('color', 'white');
+                    node.append("circle")
+                        .attr("r", function(d, i) {
+                            return bat_won_scale(bat_score_won[i]);
+                        })
+                        .text(function(d, i) { return bat_score_won[i]; })
+                            .attr('color', 'white');
 
-                node.append("text")
-                        .attr("dx", function(d){return -2})
-                        .text(function(d, i){ return bat_score_won[i] });
+                    node.append("text")
+                            .attr("dx", function(d){return -4})
+                            .text(function(d, i){ return bat_score_won[i] });
 
+            };
+
+            var create_lost_layout = function() {
+                var svg = d3.select("body").append("svg")
+                    .attr("width", diameter)
+                    .attr("height", diameter)
+                    .append("g")
+                    .attr("transform", "translate(2,2)");
+
+                var bat_lost_scale = d3.scale.linear()
+                    .domain([0, d3.max(bat_score_lost)])
+                    .range([10, 20]);
+
+                    var match_won_submit = d3.nest()
+                        .key(function(d) {
+                            return d;
+                        })
+                        .rollup(function(leaves) {
+                            return leaves.length;
+                        })
+                        .entries(bat_score_lost.sort());
+
+                    var root = {
+                        "key": "Score",
+                        "children": match_won_submit
+                    };
+
+
+                    var node = svg.datum(root).selectAll(".node")
+                        .data(pack.nodes)
+                        .enter().append("g")
+                        .attr("class", function(d) {
+                            return d.children ? "node1" : "leaf node";
+                        })
+                        .attr("transform", function(d) {
+                            return "translate(" + d.x + "," + d.y + ")";
+                        });
+
+                    console.log(root)
+
+                    node.append("circle")
+                        .attr("r", function(d, i) {
+                            return bat_lost_scale(bat_score_lost[i]);
+                        })
+                        .text(function(d, i) { return bat_score_lost[i]; })
+                            .attr('color', 'white');
+
+                    node.append("text")
+                            .attr("dx", function(d){return -4})
+                            .text(function(d, i){ return bat_score_lost[i] });
+
+            };
+
+            create_won_layout();
+            create_lost_layout();
+            
         });
     </script>
 </body>
