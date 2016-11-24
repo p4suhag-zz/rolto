@@ -109,16 +109,24 @@
                                         .domain([0, d3.max(bat_score_won)])
                                         .range(['#0eff85', '#ff7f0e']); 
 
+                    var testme = [2, 4, 6, 8, 10, 12, 14];
+                    // var match_won_submit = d3.nest()
+                    //     .key(function(d, i) {
+                    //         return d;
+                    //     })
+                    //     .rollup(function(leaves) {
+                    //         return leaves.length;
+                    //     })
+                    //     .entries(bat_score_won.sort());
                     var match_won_submit = d3.nest()
-                        .key(function(d) {
+                        .key(function(d, i) {
                             return d;
                         })
                         .rollup(function(leaves) {
-                            console.log('leaves :' + leaves);
                             return leaves.length;
                         })
                         .entries(bat_score_won.sort());
-
+                    console.log(match_won_submit);
                     var root = {
                         "key": "Score",
                         "children": match_won_submit
@@ -138,7 +146,7 @@
 
                     node.append("circle")
                         .attr("r", function(d, i) {
-                            console.log(i);
+                            // console.log(i);
                             return bat_won_scale(bat_score_won[i]);
                         })
                         .attr('fill', function(d, i) {
