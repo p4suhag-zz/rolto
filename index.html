@@ -10,46 +10,28 @@
     <link rel="stylesheet" media="all" href="assets/styles/index.css">
     <link rel="stylesheet" media="all" href="assets/styles/grid.css">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600" rel="stylesheet">
-    <script src="https://d3js.org/d3.v3.min.js"></script>
-    <style>
-    circle {
-        /*fill: rgb(31, 119, 180);*/
-        /*fill-opacity: .25;*/
-        /*stroke: rgb(31, 119, 180);*/
-        stroke-width: 1px;
-    }
-    
-    .node1 {
-        opacity: 0;
-    }
-
-    .leaf circle {
-        /*fill: #ff7f0e;*/
-        fill-opacity: 1;
-    }
-    
-    text {
-        font: 11px sans-serif;
-        font-size: 11px;
-        font-weight: 700;
-    }
-    </style>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
 </head>
 
 <body>
-
+<div class="won_container">
+    <div class="pure-g">
+        <div class="pure-u-3-5">
+            <canvas class="canvas_won" width="700" height="700"></canvas>
+        </div>
+        <div class="won-stats"></div>
+    </div>
+</div>
+<div class="lost_container">
+    <div class="pure-g">
+        <div class="pure-u-3-5">
+            <canvas class="canvas_lost" width="700" height="700"></canvas>
+        </div>
+        <div class="lost-stats"></div>
+    </div>
+</div>
 <script>
-    var diameter = 700,
-        format = d3.format(",d");
-
-    var pack = d3.layout.pack()
-        .size([diameter - 2, diameter - 2])
-        .value(function(d) {
-            return d.values;
-        });
-
     
-
     d3.json('assets/json/sachin.json', function(data) {
 
 
@@ -86,294 +68,68 @@
                 }
             });
 
-            console.log(bat_score_won.length);
-            console.log(bat_score_lost.length);
+            var bat_won_scale = d3.scaleLinear()
+                                .domain([0, d3.max(bat_score_won)])
+                                .range([5, 38]);
 
-            var create_won_layout = function() {
-                var won_block = d3.select("body").append('div')
-                    .attr('class', 'pure-g');
+            var bat_lost_scale = d3.scaleLinear()
+                                .domain([0, d3.max(bat_score_lost)])
+                                .range([5, 38]);
 
-                var svg = won_block.append('div')
-                    .attr('class', 'pure-u-3-5 won_graph')
-                    .append("svg")
-                    .attr("width", diameter)
-                    .attr("height", diameter)
-                    .append("g")
-                    .attr("transform", "translate(20,2)");
-
-                var bat_won_scale = d3.scale.linear()
-                    .domain([0, d3.max(bat_score_won)])
-                    .range([12, 23]);
-
-                var won_color_scale = d3.scale.linear()
-                                        .domain([0, d3.max(bat_score_won)])
-                                        .range(['#0eff85', '#ff7f0e']); 
-
-                    var testme = [2, 4, 6, 8, 10, 12, 14];
-                    // var match_won_submit = d3.nest()
-                    //     .key(function(d, i) {
-                    //         return d;
-                    //     })
-                    //     .rollup(function(leaves) {
-                    //         return leaves.length;
-                    //     })
-                    //     .entries(bat_score_won.sort());
-                    var match_won_submit = d3.nest()
-                        .key(function(d, i) {
-                            return d;
-                        })
-                        .rollup(function(leaves) {
-                            return leaves.length;
-                        })
-                        .entries(bat_score_won.sort());
-                    console.log(match_won_submit);
-                    var root = {
-                        "key": "Score",
-                        "children": match_won_submit
-                    };
+            var won_color_scale = d3.scaleLinear()
+                                    .domain([0, d3.max(bat_score_won)])
+                                    .range(['#0eff85', '#ff7f0e']);
 
 
-                    var node = svg.datum(root).selectAll(".node")
-                        .data(pack.nodes)
-                        .enter().append("g")
-                        .attr("class", function(d) {
-                            return d.children ? "node1" : "leaf node";
-                        })
-                        .attr("transform", function(d) {
-                            return "translate(" + d.x + "," + d.y + ")";
-                        });
+            
+            var createGraph = function(canvaselem, dataarray, datascale, graphcolor) {
+               var canvas = document.querySelector(canvaselem),
+                   context = canvas.getContext("2d"),
+                   width = canvas.width,
+                   height = canvas.height,
+                   tau = 2 * Math.PI;
 
+               var nodes = d3.range(dataarray.length).map(function(i) {
+                 return {
+                   r: datascale(dataarray[i]),
+                   run: dataarray[i]
+                 };
+               });
 
-                    node.append("circle")
-                        .attr("r", function(d, i) {
-                            // console.log(i);
-                            return bat_won_scale(bat_score_won[i]);
-                        })
-                        .attr('fill', function(d, i) {
-                            return won_color_scale(bat_score_won[i]);
-                        })
-                        .text(function(d, i) { return bat_score_won[i]; })
-                            .attr('color', 'white');
+               var simulation = d3.forceSimulation(nodes)
+                   .velocityDecay(0.2)
+                   .force("x", d3.forceX().strength(0.002))
+                   .force("y", d3.forceY().strength(0.002))
+                   .force("collide", d3.forceCollide().radius(function(d) { return d.r + 0.3; }).iterations(0.1))
+                   .on("tick", ticked);
 
+               function ticked() {
+                 context.clearRect(0, 0, width, height);
+                 context.save();
+                 context.translate(width / 2, height / 2);
 
-                    var text_scale = d3.scale.linear()
-                                        .domain([0, d3.max(bat_score_won)])
-                                        .range([-4, -9]);
+                 context.beginPath();
+                 nodes.forEach(function(d) {
+                   context.moveTo(d.x + d.r, d.y);
+                   // context.fillText(d.run, d.x-3, d.y+3);
+                   // context.font = "12px sans-serif";
+                   // context.fillStyle = won_color_scale(d.run);
+                   context.arc(d.x, d.y, d.r, 0, tau);
+                 });
+                 context.fontStyle = "blue";
+                 context.fillStyle = graphcolor;
+                 context.fill();
+                 context.strokeStyle = "#263238";
+                 context.stroke();
+                 
 
-                    node.append("text")
-                            .attr("dx", function(d, i) {
-                                return text_scale(bat_score_won[i]);
-                            })
-                            .attr("dy", 2)
-                            .text(function(d, i){ return bat_score_won[i] });
-
-                    var sachin_totalruns = d3.sum(bat_score_won),
-                        sachin_average = d3.mean(bat_score_won),
-                        sachin_max = d3.max(bat_score_won);
-
-                    var high_20 = [],
-                        low_20 = [];
-                    bat_score_won.map(function(num) {
-                        if(num > 20) {
-                            high_20.push(num);
-                        }else {
-                            low_20.push(num);
-                        }
-                    });
-
-
-                    d3.select('.won_graph').append('p')
-                                            .attr('class', 'graph_title')
-                                            .text('Sachin Score in Matches India Won');
-
-
-                    var sidebar_won = won_block.append('div')
-                                        .attr('class', 'pure-u-2-5')
-                                        .append('div')
-                                        .style('display', 'flex')
-                                        .style('height', '100%')
-                                        .append('div')
-                                        .attr('class', 'won_info');
-
-                    sidebar_won.append('p')
-                                .text('Total Runs : ')
-                                .append('span')
-                                .text(sachin_totalruns);
-
-                    sidebar_won.append('p')
-                                .text('Average Runs : ')
-                                .append('span')
-                                .text(sachin_average);
-
-                    sidebar_won.append('p')
-                                .text('Maximum Run : ')
-                                .append('span')
-                                .text(sachin_max);
-
-                    sidebar_won.append('p')
-                                .text('Matches above 20 Runs : ')
-                                .append('span')
-                                .text(high_20.length);
-
-                    sidebar_won.append('p')
-                                .text('Matches below 20 Runs : ')
-                                .append('span')
-                                .text(low_20.length);
-
-                    sidebar_won.append('p')
-                                .text("No. of 50's : ")
-                                .append('span')
-                                .text(bat_won_50.length);
-
-                    sidebar_won.append('p')
-                                .text("No. of 100's : ")
-                                .append('span')
-                                .text(bat_won_100.length);  
-
-
+                 context.restore();
+               } 
             };
 
-            var create_lost_layout = function() {
+            createGraph('.canvas_won', bat_score_won, bat_won_scale, '#ff7f0e');
+            createGraph('.canvas_lost', bat_score_lost, bat_lost_scale, '#ff0e24');
 
-                var lost_block = d3.select("body").append('div')
-                    .attr('class', 'pure-g');
-                
-                var svg = lost_block.append('div')
-                    .attr('class', 'pure-u-3-5 lost_graph')
-                    .append("svg")
-                    .attr("width", diameter)
-                    .attr("height", diameter)
-                    .append("g")
-                    .attr("transform", "translate(20,2)");
-
-
-                var bat_lost_scale = d3.scale.linear()
-                    .domain([0, d3.max(bat_score_lost)])
-                    .range([10, 20]);
-
-                var lost_color_scale = d3.scale.linear()
-                                        .domain([0, d3.max(bat_score_lost)])
-                                        .range(['#ff0e24', '#0eb1ff']);
-
-                    var match_won_submit = d3.nest()
-                        .key(function(d) {
-                            return d;
-                        })
-                        .rollup(function(leaves) {
-                            return leaves.length;
-                        })
-                        .entries(bat_score_lost.sort());
-
-                    var root = {
-                        "key": "Score",
-                        "children": match_won_submit
-                    };
-
-
-                    var node = svg.datum(root).selectAll(".node")
-                        .data(pack.nodes)
-                        .enter().append("g")
-                        .attr("class", function(d) {
-                            return d.children ? "node1" : "leaf node";
-                        })
-                        .attr("transform", function(d) {
-                            return "translate(" + d.x + "," + d.y + ")";
-                        });
-
-
-                    node.append("circle")
-                        .attr("r", function(d, i) {
-                            return bat_lost_scale(bat_score_lost[i]);
-                        })
-                        .attr('fill', function(d, i) {
-                            return lost_color_scale(bat_score_lost[i]);
-                        })
-                        .text(function(d, i) { return bat_score_lost[i]; })
-                            .attr('color', 'white');
-
-
-
-                    var text_scale = d3.scale.linear()
-                                        .domain([0, d3.max(bat_score_lost)])
-                                        .range([-4, -9]);
-                                        
-                    node.append("text")
-                            .attr("dx", function(d, i) {
-                                return text_scale(bat_score_lost[i]);
-                            })
-                            .attr("dy", 2)
-                            .text(function(d, i){ return bat_score_lost[i] });
-
-
-                    var sachin_totalruns = d3.sum(bat_score_lost),
-                        sachin_average = d3.mean(bat_score_lost),
-                        sachin_max = d3.max(bat_score_lost);
-
-                    var high_20 = [],
-                        low_20 = [];
-                    bat_score_lost.map(function(num) {
-                        if(num > 20) {
-                            high_20.push(num);
-                        }else {
-                            low_20.push(num);
-                        }
-                    });
-
-
-
-                    d3.select('.lost_graph').append('p')
-                                            .attr('class', 'graph_title')
-                                            .text('Sachin Score in Matches India Lost');
-
-
-                    var sidebar_lost = lost_block.append('div')
-                                        .attr('class', 'pure-u-2-5')
-                                        .append('div')
-                                        .style('display', 'flex')
-                                        .style('height', '100%')
-                                        .append('div')
-                                        .attr('class', 'lost_info');
-                                        
-
-                    sidebar_lost.append('p')
-                                .text('Total Runs : ')
-                                .append('span')
-                                .text(sachin_totalruns);
-
-                    sidebar_lost.append('p')
-                                .text('Average Runs : ')
-                                .append('span')
-                                .text(sachin_average);
-
-                    sidebar_lost.append('p')
-                                .text('Maximum Run : ')
-                                .append('span')
-                                .text(sachin_max);
-
-                    sidebar_lost.append('p')
-                                .text('Matches above 20 Runs : ')
-                                .append('span')
-                                .text(high_20.length);
-
-                    sidebar_lost.append('p')
-                                .text('Matches below 20 Runs : ')
-                                .append('span')
-                                .text(low_20.length);
-
-                    sidebar_lost.append('p')
-                                .text("No. of 50's : ")
-                                .append('span')
-                                .text(bat_lost_50.length);
-
-                    sidebar_lost.append('p')
-                                .text("No. of 100's : ")
-                                .append('span')
-                                .text(bat_lost_100.length);
-
-            };
-
-            create_won_layout();
-            create_lost_layout();
             
         });
     </script>
