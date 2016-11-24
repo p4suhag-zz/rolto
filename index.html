@@ -14,124 +14,180 @@
 </head>
 
 <body>
-<div class="won_container">
-    <div class="pure-g">
-        <div class="pure-u-3-5">
-            <canvas class="canvas_won" width="700" height="700"></canvas>
+    <div class="won_container">
+        <div class="pure-g">
+            <div class="pure-u-3-5">
+                <canvas class="canvas_won" width="700" height="700"></canvas>
+            </div>
+            <div class="pure-u-2-5">
+                <div class="won-stats"></div>
+            </div>
         </div>
-        <div class="won-stats"></div>
     </div>
-</div>
-<div class="lost_container">
-    <div class="pure-g">
-        <div class="pure-u-3-5">
-            <canvas class="canvas_lost" width="700" height="700"></canvas>
+    <div class="lost_container">
+        <div class="pure-g">
+            <div class="pure-u-3-5">
+                <canvas class="canvas_lost" width="700" height="700"></canvas>
+            </div>
+            <div class="pure-u-2-5">
+                <div class="lost-stats"></div>
+            </div>
         </div>
-        <div class="lost-stats"></div>
     </div>
-</div>
-<script>
-    
+    <p class="bottom_head">Above Visualisation shows that Sachin Tendulkar is truely a greatest cricketer of all time and the contribution of Sachin in Indian Team.</p>
+    <script>
     d3.json('assets/json/sachin.json', function(data) {
 
 
-            var bat_score_w = [],
-                bat_score_l = [];
+        var bat_score_w = [],
+            bat_score_l = [];
 
-            data.filter(function(item) {
-                if (item.match_result === 'won' && item.batting_score !== 'DNB') {
-                    bat_score_w.push(item.batting_score);
-                } else if (item.match_result === 'lost' && item.batting_score !== 'DNB') {
-                    bat_score_l.push(item.batting_score);
-                }
-            });
-
-            var bat_score_won = bat_score_w.map(Number),
-                bat_score_lost = bat_score_l.map(Number),
-                bat_won_50 = [],
-                bat_won_100 = [],
-                bat_lost_50 = [],
-                bat_lost_100 = [];
-
-            bat_score_won.filter(function(item) {
-                if(item >= 50 && item < 100) {
-                    bat_won_50.push(item);
-                } else if(item >= 100) {
-                    bat_won_100.push(item);
-                }
-            });
-            bat_score_lost.filter(function(item) {
-                if(item >= 50 && item < 100) {
-                    bat_lost_50.push(item);
-                } else if(item >= 100) {
-                    bat_lost_100.push(item);
-                }
-            });
-
-            var bat_won_scale = d3.scaleLinear()
-                                .domain([0, d3.max(bat_score_won)])
-                                .range([5, 38]);
-
-            var bat_lost_scale = d3.scaleLinear()
-                                .domain([0, d3.max(bat_score_lost)])
-                                .range([5, 38]);
-
-            var won_color_scale = d3.scaleLinear()
-                                    .domain([0, d3.max(bat_score_won)])
-                                    .range(['#0eff85', '#ff7f0e']);
-
-
-            
-            var createGraph = function(canvaselem, dataarray, datascale, graphcolor) {
-               var canvas = document.querySelector(canvaselem),
-                   context = canvas.getContext("2d"),
-                   width = canvas.width,
-                   height = canvas.height,
-                   tau = 2 * Math.PI;
-
-               var nodes = d3.range(dataarray.length).map(function(i) {
-                 return {
-                   r: datascale(dataarray[i]),
-                   run: dataarray[i]
-                 };
-               });
-
-               var simulation = d3.forceSimulation(nodes)
-                   .velocityDecay(0.2)
-                   .force("x", d3.forceX().strength(0.002))
-                   .force("y", d3.forceY().strength(0.002))
-                   .force("collide", d3.forceCollide().radius(function(d) { return d.r + 0.3; }).iterations(0.1))
-                   .on("tick", ticked);
-
-               function ticked() {
-                 context.clearRect(0, 0, width, height);
-                 context.save();
-                 context.translate(width / 2, height / 2);
-
-                 context.beginPath();
-                 nodes.forEach(function(d) {
-                   context.moveTo(d.x + d.r, d.y);
-                   // context.fillText(d.run, d.x-3, d.y+3);
-                   // context.font = "12px sans-serif";
-                   // context.fillStyle = won_color_scale(d.run);
-                   context.arc(d.x, d.y, d.r, 0, tau);
-                 });
-                 context.fontStyle = "blue";
-                 context.fillStyle = graphcolor;
-                 context.fill();
-                 context.strokeStyle = "#263238";
-                 context.stroke();
-                 
-
-                 context.restore();
-               } 
-            };
-
-            createGraph('.canvas_won', bat_score_won, bat_won_scale, '#ff7f0e');
-            createGraph('.canvas_lost', bat_score_lost, bat_lost_scale, '#ff0e24');
-
-            
+        data.filter(function(item) {
+            if (item.match_result === 'won' && item.batting_score !== 'DNB') {
+                bat_score_w.push(item.batting_score);
+            } else if (item.match_result === 'lost' && item.batting_score !== 'DNB') {
+                bat_score_l.push(item.batting_score);
+            }
         });
+
+        var bat_score_won = bat_score_w.map(Number),
+            bat_score_lost = bat_score_l.map(Number),
+            bat_won_50 = [],
+            bat_won_100 = [],
+            bat_lost_50 = [],
+            bat_lost_100 = [],
+            bat_won_low_20 = [],
+            bat_lost_low_20 = [];
+
+        bat_score_won.filter(function(item) {
+            if (item >= 50 && item < 100) {
+                bat_won_50.push(item);
+            } else if (item >= 100) {
+                bat_won_100.push(item);
+            } else if (item <= 20) {
+                bat_won_low_20.push(item);
+            }
+        });
+        bat_score_lost.filter(function(item) {
+            if (item >= 50 && item < 100) {
+                bat_lost_50.push(item);
+            } else if (item >= 100) {
+                bat_lost_100.push(item);
+            } else if (item <= 20) {
+                bat_lost_low_20.push(item);
+            }
+        });
+
+        var bat_won_scale = d3.scaleLinear()
+            .domain([0, d3.max(bat_score_won)])
+            .range([5, 38]);
+
+        var bat_lost_scale = d3.scaleLinear()
+            .domain([0, d3.max(bat_score_lost)])
+            .range([5, 38]);
+
+        var won_color_scale = d3.scaleLinear()
+            .domain([0, d3.max(bat_score_won)])
+            .range(['#0eff85', '#ff7f0e']);
+
+
+
+        var createGraph = function(canvaselem, dataarray, datascale, graphcolor) {
+            var canvas = document.querySelector(canvaselem),
+                context = canvas.getContext("2d"),
+                width = canvas.width,
+                height = canvas.height,
+                tau = 2 * Math.PI;
+
+            var nodes = d3.range(dataarray.length).map(function(i) {
+                return {
+                    r: datascale(dataarray[i]),
+                    run: dataarray[i]
+                };
+            });
+
+            var simulation = d3.forceSimulation(nodes)
+                .velocityDecay(0.2)
+                .force("x", d3.forceX().strength(0.002))
+                .force("y", d3.forceY().strength(0.002))
+                .force("collide", d3.forceCollide().radius(function(d) {
+                    return d.r + 0.3;
+                }).iterations(0.1))
+                .on("tick", ticked);
+
+            function ticked() {
+                context.clearRect(0, 0, width, height);
+                context.save();
+                context.translate(width / 2, height / 2);
+
+                context.beginPath();
+                nodes.forEach(function(d) {
+                    context.moveTo(d.x + d.r, d.y);
+                    // context.fillText(d.run, d.x-3, d.y+3);
+                    // context.font = "12px sans-serif";
+                    // context.fillStyle = won_color_scale(d.run);
+                    context.arc(d.x, d.y, d.r, 0, tau);
+                });
+                context.fontStyle = "blue";
+                context.fillStyle = graphcolor;
+                context.fill();
+                context.strokeStyle = "#002934";
+                context.stroke();
+
+                context.restore();
+            }
+        };
+
+        var createStats = function(statpos, dataarray, fifty, hundred, low20) {
+
+            var sidebar = d3.select(statpos)
+                .append('div')
+                .attr('class', 'margin-auto');
+            sidebar.append('p')
+                .text('Total Runs : ')
+                .append('span')
+                .text(d3.sum(dataarray));
+            sidebar.append('p')
+                .text('Average Runs : ')
+                .append('span')
+                .text(d3.mean(dataarray));
+            sidebar.append('p')
+                .text('Maximum Run : ')
+                .append('span')
+                .text(d3.max(dataarray));
+            sidebar.append('p')
+                .text('Matches above 20 Runs : ')
+                .append('span')
+                .text(dataarray.length - low20.length);
+            sidebar.append('p')
+                .text('Matches below 20 Runs : ')
+                .append('span')
+                .text(low20.length);
+            sidebar.append('p')
+                .text("No. of 50's : ")
+                .append('span')
+                .text(fifty.length);
+            sidebar.append('p')
+                .text("No. of 100's : ")
+                .append('span')
+                .text(hundred.length);
+        };
+
+        d3.select('.won_container').append('p')
+            .attr('class', 'graph_title')
+            .text("Sachin's score in matches India won");
+
+        d3.select('.lost_container').append('p')
+            .attr('class', 'graph_title')
+            .text("Sachin's score in matches India lost");
+
+        createGraph('.canvas_won', bat_score_won, bat_won_scale, '#ff7f0e');
+        createGraph('.canvas_lost', bat_score_lost, bat_lost_scale, '#ff0e24');
+
+        createStats('.won-stats', bat_score_won, bat_won_50, bat_won_100, bat_won_low_20);
+        createStats('.lost-stats', bat_score_lost, bat_lost_50, bat_lost_100, bat_lost_low_20);
+
+    });
     </script>
 </body>
 

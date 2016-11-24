@@ -4,19 +4,25 @@ html,body {
 }
 
 * {
-    background-color: #263238;
+    background-color: #002934;
     color: #FFCB6B;
     font-family: 'Open Sans', sans-serif;
     letter-spacing: 1.2px;
     font-weight: 100;
 }
-.won_info, .lost_info {
+
+.margin-auto {
     margin: auto;
+}
+
+.won-stats, .lost-stats {
+    display: flex;
+    height: 100%;
 }
 
 span {
     margin-left: 15px;
-    color: blue;
+    color: #0088B9;
     font-size: 18px;
     font-weight: 500;
     letter-spacing: 1.5px;
@@ -24,6 +30,13 @@ span {
 
 .graph_title {
     margin-top: 0;
-    margin-bottom: 50px;
+    margin-bottom: 60px;
     text-align: center;
 }
+.bottom_head {
+    margin: 120px 20% 60px;
+    line-height: 30px;
+    text-align: justify;
+}
+
+
